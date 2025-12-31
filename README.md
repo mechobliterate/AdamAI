@@ -8,7 +8,7 @@ Every five generations, agents are allowed more moves, enabling them to learn mo
 
 **Note:** AdamAI typically reaches the first checkpoint in about 50 generations (with evolution speed set to 6), the second in around 120 generations, and continues to improve as learning progresses. Be patient—evolution takes time!
 
-<img src="https://imgur.com/zpuw4bf" alt="AdamAI demo screenshot"/>
+<img src="https://imgur.com/zpuw4bf.jpg" alt="AdamAI demo screenshot"/>
 
 ## Features
 
