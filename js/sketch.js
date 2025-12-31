@@ -2,7 +2,6 @@ var tileSize = 50;
 var xoff = 145;
 var yoff = 100;
 
-//human playing vars
 var humanPlaying = false;
 var left = false;
 var right = false;
@@ -10,7 +9,6 @@ var up = false;
 var down = false;
 var p;
 
-//arrays
 var tiles = [];
 var solids = [];
 var dots = [];
@@ -18,14 +16,12 @@ var savedDots = [];
 
 var showBest = true;
 
-var winArea; //a solid which is the win zone i.e. the green bits
+var winArea;
 
-//gen replay vars
 var replayGens = false;
 var genPlayer;
 var upToGenPos = 0;
 
-//population vars
 var numberOfSteps = 10;
 var testPopulation;
 
@@ -34,39 +30,34 @@ var winCounter = -1;
 var img;
 var flip = true;
 
-//population size vars
 var populationSize = 500;
 var popPara;
-var popPlus;
-var popMinus;
+var popSlider;
 
-//mutation rate vars
 var mutationRate = 0.04;
 var mrPara;
-var mrPlus;
-var mrMinus;
+var mrSlider;
 
-//evolution speed vars
 var evolutionSpeed = 1;
 var speedPara;
-var speedPlus;
-var speedMinus;
+var speedSlider;
 
-//increaseMoves
 var movesH3;
 
 var increaseMovesBy = 5;
 var movesPara;
-var movesPlus;
-var movesMinus;
+var movesSlider;
 
 var increaseEvery = 5;
 var everyPara;
-var everyPlus;
-var everyMinus;
+var everySlider;
 
 function setup() {
   var canvas = createCanvas(1200, 640);
+  canvas.style("display", "block");
+  canvas.style("margin-left", "auto");
+  canvas.style("margin-right", "auto");
+  textFont("Arial");
   htmlStuff();
   for (var i = 0; i < 22; i++) {
     tiles[i] = [];
@@ -79,7 +70,6 @@ function setup() {
   setLevel1Goal();
   setLevel1SafeArea();
   setEdges();
-  // setMazeWalls();
   setSolids();
 
   p = new Player();
@@ -88,11 +78,9 @@ function setup() {
   testPopulation = new Population(populationSize);
   img = loadImage("https://i.imgur.com/QZf0d6r.gif");
 
-  //prevents the window from moving from the arrow keys or the spacebar
   window.addEventListener(
     "keydown",
     function (e) {
-      // space and arrow keys
       if ([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
         e.preventDefault();
       }
@@ -103,14 +91,12 @@ function setup() {
 var showedCoin = false;
 function draw() {
   showedCoin = false;
-  background(230, 230, 255);
+  background(255, 255, 255);
   drawTiles();
   writeShit();
 
   if (humanPlaying) {
-    //if the user is controlling the square
     if ((p.dead && p.fadeCounter <= 0) || p.reachedGoal) {
-      //reset player and dots
       if (p.reachedGoal) {
         winCounter = 100;
       }
@@ -118,61 +104,41 @@ function draw() {
       p.human = true;
       resetDots();
     } else {
-      //update the dots and the players and show them to the screen
-
       moveAndShowDots();
 
       p.update();
       p.show();
     }
   } else if (replayGens) {
-    //if replaying the best generations
     if (
       (genPlayer.dead && genPlayer.fadeCounter <= 0) ||
       genPlayer.reachedGoal
     ) {
-      //if the current gen is done
-      upToGenPos++; //next gen
+      upToGenPos++;
       if (testPopulation.genPlayers.length <= upToGenPos) {
-        //if reached the final gen
-        //stop replaying gens
         upToGenPos = 0;
         replayGens = false;
-        //return the dots to their saved position
 
         loadDots();
       } else {
-        //if there are more generations to show
-        //set gen player as the best player of that generation
         genPlayer = testPopulation.genPlayers[upToGenPos].gimmeBaby();
-        //reset the dots positions
         resetDots();
       }
     } else {
-      //if not done
-      //move and show dots
       moveAndShowDots();
-      //move and update player
       genPlayer.update();
       genPlayer.show();
     }
   } else if (testPopulation.allPlayersDead()) {
-    //if training normaly
-    //genetic algorithm
     testPopulation.calculateFitness();
     testPopulation.naturalSelection();
     testPopulation.mutateDemBabies();
-    //reset dots
     resetDots();
 
-    //every 5 generations incease the number of moves by 5
     if (testPopulation.gen % increaseEvery == 0) {
       testPopulation.increaseMoves();
     }
   } else {
-    // moveAndShowDots();
-    //update and show population
-
     for (var j = 0; j < evolutionSpeed; j++) {
       for (var i = 0; i < dots.length; i++) {
         dots[i].move();
@@ -226,10 +192,10 @@ function writeShit() {
   fill(0, 0, 0);
   textSize(18);
   noStroke();
-  text("Press SPACE to show the generation that Kyli AI belongs to.", 440, 590)
+  text("Press SPACE to view all agents in the current generation.", 440, 590)
     .fo;
   text(
-    " \tPress P to play the game yourself. \t\t\t Press G to replay evolution highlights.",
+    " \tPress P to play manually. \t\t\t Press G to replay best generations.",
     370,
     620,
   );
@@ -256,14 +222,14 @@ function writeShit() {
   }
   if (replayGens) {
     text("Generation: " + genPlayer.gen, 240, 120);
-    text("Number of moves: " + genPlayer.brain.directions.length, 950, 120);
+    text("Number of Moves: " + genPlayer.brain.directions.length, 950, 120);
   } else if (!humanPlaying) {
     text("Generation: " + testPopulation.gen, 240, 120);
     if (testPopulation.solutionFound) {
       text("Wins in " + testPopulation.minStep + " moves", 950, 120);
     } else {
       text(
-        "Number of moves: " + testPopulation.players[0].brain.directions.length,
+        "Number of Moves: " + testPopulation.players[0].brain.directions.length,
         950,
         120,
       );
@@ -304,12 +270,11 @@ function keyPressed() {
     }
     setPlayerVelocity();
   } else {
-    //if human is not playing
     switch (key) {
       case " ":
         showBest = !showBest;
         break;
-      case "G": //replay gens
+      case "G":
         if (replayGens) {
           upToGenPos = 0;
           replayGens = false;
@@ -326,13 +291,9 @@ function keyPressed() {
 
   if (key == "P") {
     if (humanPlaying) {
-      //if human is currently playing
-
-      //reset dots to position
       humanPlaying = false;
       loadDots();
     } else {
-      //if AI is currently playing
       if (replayGens) {
         upToGenPos = 0;
         replayGens = false;
@@ -340,7 +301,6 @@ function keyPressed() {
       humanPlaying = true;
       p = new Player();
       p.human = true;
-      //save the positions of the dots
       saveDots();
       resetDots();
     }
@@ -381,7 +341,6 @@ function keyReleased() {
     setPlayerVelocity();
   }
 }
-//set the velocity of the player based on what keys are currently down
 
 function setPlayerVelocity() {
   p.vel.y = 0;
@@ -399,137 +358,179 @@ function setPlayerVelocity() {
     p.vel.x += 1;
   }
 }
-//---------------------------------------------------------------------------------------------------------------------
+
 function htmlStuff() {
-  createElement("h2", "Change the Evolution Cycle");
-  popPara = createDiv("Population Size: " + populationSize);
-  popMinus = createButton("-");
-  popPlus = createButton("+");
+  var controlPanel = createDiv("");
+  controlPanel.id("control-panel");
+  controlPanel.style("position", "fixed");
+  controlPanel.style("left", "50%");
+  controlPanel.style("top", "220px");
+  controlPanel.style("transform", "translateX(-620px)");
+  controlPanel.style("width", "180px");
+  controlPanel.style("padding", "20px");
+  controlPanel.style("background-color", "#f5f5f5");
+  controlPanel.style("border", "1px solid #ddd");
+  controlPanel.style("border-radius", "8px");
+  controlPanel.style("box-shadow", "0 2px 4px rgba(0,0,0,0.1)");
 
-  popPlus.mousePressed(plusPopSize);
-  popMinus.mousePressed(minusPopSize);
+  var title = createElement("h3", "Evolution Controls");
+  title.parent(controlPanel);
+  title.style("margin-top", "0");
+  title.style("margin-bottom", "15px");
+  title.style("font-size", "18px");
 
-  mrPara = createDiv("Mutation Rate: " + mutationRate);
-  mrMinus = createButton("1/2");
-  mrPlus = createButton("x2");
-  mrPlus.mousePressed(plusmr);
-  mrMinus.mousePressed(minusmr);
+  var popContainer = createDiv("");
+  popContainer.parent(controlPanel);
+  popContainer.style("margin-bottom", "15px");
 
-  speedPara = createDiv("Evolution Speed: " + evolutionSpeed);
-  speedMinus = createButton("-");
-  speedPlus = createButton("+");
-  speedPlus.mousePressed(plusSpeed);
-  speedMinus.mousePressed(minusSpeed);
+  var popLabelContainer = createDiv("");
+  popLabelContainer.parent(popContainer);
+  popLabelContainer.style("display", "flex");
+  popLabelContainer.style("justify-content", "space-between");
+  popLabelContainer.style("align-items", "center");
+  popLabelContainer.style("margin-bottom", "5px");
 
-  movesH3 = createElement(
-    "h4",
-    "Increase number of player moves by " +
-      increaseMovesBy +
-      " every " +
-      increaseEvery +
-      " generations:",
-  );
-  movesPara = createDiv("Increase moves by: " + increaseMovesBy);
-  movesMinus = createButton("-");
-  movesPlus = createButton("+");
-  movesPlus.mousePressed(plusMoves);
-  movesMinus.mousePressed(minusMoves);
-  everyPara = createDiv("Increase every " + increaseEvery + " generations");
-  everyMinus = createButton("-");
-  everyPlus = createButton("+");
-  everyPlus.mousePressed(plusEvery);
-  everyMinus.mousePressed(minusEvery);
+  var popLabel = createDiv("Population Size");
+  popLabel.parent(popLabelContainer);
+  popLabel.style("font-weight", "bold");
+
+  popPara = createDiv(populationSize.toString());
+  popPara.parent(popLabelContainer);
+
+  popSlider = createSlider(100, 10000, populationSize, 100);
+  popSlider.parent(popContainer);
+  popSlider.style("width", "100%");
+  popSlider.input(updatePopSize);
+
+  var mrContainer = createDiv("");
+  mrContainer.parent(controlPanel);
+  mrContainer.style("margin-bottom", "15px");
+
+  var mrLabelContainer = createDiv("");
+  mrLabelContainer.parent(mrContainer);
+  mrLabelContainer.style("display", "flex");
+  mrLabelContainer.style("justify-content", "space-between");
+  mrLabelContainer.style("align-items", "center");
+  mrLabelContainer.style("margin-bottom", "5px");
+
+  var mrLabel = createDiv("Mutation Rate");
+  mrLabel.parent(mrLabelContainer);
+  mrLabel.style("font-weight", "bold");
+
+  mrPara = createDiv(mutationRate.toFixed(4));
+  mrPara.parent(mrLabelContainer);
+
+  mrSlider = createSlider(0.0001, 0.5, mutationRate, 0.0001);
+  mrSlider.parent(mrContainer);
+  mrSlider.style("width", "100%");
+  mrSlider.input(updateMutationRate);
+
+  var speedContainer = createDiv("");
+  speedContainer.parent(controlPanel);
+  speedContainer.style("margin-bottom", "15px");
+
+  var speedLabelContainer = createDiv("");
+  speedLabelContainer.parent(speedContainer);
+  speedLabelContainer.style("display", "flex");
+  speedLabelContainer.style("justify-content", "space-between");
+  speedLabelContainer.style("align-items", "center");
+  speedLabelContainer.style("margin-bottom", "5px");
+
+  var speedLabel = createDiv("Evolution Speed");
+  speedLabel.parent(speedLabelContainer);
+  speedLabel.style("font-weight", "bold");
+
+  speedPara = createDiv(evolutionSpeed.toString());
+  speedPara.parent(speedLabelContainer);
+
+  speedSlider = createSlider(1, 10, evolutionSpeed, 1);
+  speedSlider.parent(speedContainer);
+  speedSlider.style("width", "100%");
+  speedSlider.input(updateSpeed);
+
+  var divider = createDiv("");
+  divider.parent(controlPanel);
+  divider.style("border-top", "1px solid #ddd");
+  divider.style("margin", "15px 0");
+
+  var movesTitle = createDiv("Move Increment");
+  movesTitle.parent(controlPanel);
+  movesTitle.style("font-weight", "bold");
+  movesTitle.style("margin-bottom", "10px");
+  movesTitle.style("font-size", "14px");
+
+  var movesContainer = createDiv("");
+  movesContainer.parent(controlPanel);
+  movesContainer.style("margin-bottom", "15px");
+
+  var movesLabelContainer = createDiv("");
+  movesLabelContainer.parent(movesContainer);
+  movesLabelContainer.style("display", "flex");
+  movesLabelContainer.style("justify-content", "space-between");
+  movesLabelContainer.style("align-items", "center");
+  movesLabelContainer.style("margin-bottom", "5px");
+
+  var movesLabel = createDiv("Increase moves by");
+  movesLabel.parent(movesLabelContainer);
+  movesLabel.style("font-weight", "bold");
+  movesLabel.style("font-size", "13px");
+
+  movesPara = createDiv(increaseMovesBy.toString());
+  movesPara.parent(movesLabelContainer);
+  movesPara.style("font-size", "13px");
+
+  movesSlider = createSlider(1, 100, increaseMovesBy, 1);
+  movesSlider.parent(movesContainer);
+  movesSlider.style("width", "100%");
+  movesSlider.input(updateMoves);
+
+  var everyContainer = createDiv("");
+  everyContainer.parent(controlPanel);
+  everyContainer.style("margin-bottom", "0");
+
+  var everyLabelContainer = createDiv("");
+  everyLabelContainer.parent(everyContainer);
+  everyLabelContainer.style("display", "flex");
+  everyLabelContainer.style("justify-content", "space-between");
+  everyLabelContainer.style("align-items", "center");
+  everyLabelContainer.style("margin-bottom", "5px");
+
+  var everyLabel = createDiv("Every N generations");
+  everyLabel.parent(everyLabelContainer);
+  everyLabel.style("font-weight", "bold");
+  everyLabel.style("font-size", "13px");
+
+  everyPara = createDiv(increaseEvery.toString());
+  everyPara.parent(everyLabelContainer);
+  everyPara.style("font-size", "13px");
+
+  everySlider = createSlider(1, 100, increaseEvery, 1);
+  everySlider.parent(everyContainer);
+  everySlider.style("width", "100%");
+  everySlider.input(updateEvery);
 }
 
-function minusPopSize() {
-  if (populationSize > 100) {
-    populationSize -= 100;
-    popPara.html("Population Size: " + populationSize);
-  }
-}
-function plusPopSize() {
-  if (populationSize < 10000) {
-    populationSize += 100;
-    popPara.html("Population Size: " + populationSize);
-  }
+function updatePopSize() {
+  populationSize = popSlider.value();
+  popPara.html(populationSize.toString());
 }
 
-function minusmr() {
-  if (mutationRate > 0.0001) {
-    mutationRate /= 2.0;
-    mrPara.html("Mutation Rate: " + mutationRate);
-  }
-}
-function plusmr() {
-  if (mutationRate <= 0.5) {
-    mutationRate *= 2.0;
-    mrPara.html("Mutation Rate: " + mutationRate);
-  }
+function updateMutationRate() {
+  mutationRate = mrSlider.value();
+  mrPara.html(mutationRate.toFixed(4));
 }
 
-function minusSpeed() {
-  if (evolutionSpeed > 1) {
-    evolutionSpeed -= 1;
-    speedPara.html("Evolution Player Speed: " + evolutionSpeed);
-  }
-}
-function plusSpeed() {
-  if (evolutionSpeed <= 7) {
-    evolutionSpeed += 1;
-    speedPara.html("Evolution Player Speed: " + evolutionSpeed);
-  }
+function updateSpeed() {
+  evolutionSpeed = speedSlider.value();
+  speedPara.html(evolutionSpeed.toString());
 }
 
-function minusMoves() {
-  if (increaseMovesBy >= 1) {
-    increaseMovesBy -= 1;
-    movesPara.html("Increase moves by: " + increaseMovesBy);
-    movesH3.html(
-      "Increase number of player moves by " +
-        increaseMovesBy +
-        " every " +
-        increaseEvery +
-        " generations",
-    );
-  }
-}
-function plusMoves() {
-  if (increaseMovesBy <= 500) {
-    increaseMovesBy += 1;
-    movesPara.html("Increase moves by: " + increaseMovesBy);
-    movesH3.html(
-      "Increase number of player moves by " +
-        increaseMovesBy +
-        " every " +
-        increaseEvery +
-        " generations",
-    );
-  }
+function updateMoves() {
+  increaseMovesBy = movesSlider.value();
+  movesPara.html(increaseMovesBy.toString());
 }
 
-function minusEvery() {
-  if (increaseEvery > 1) {
-    increaseEvery -= 1;
-    everyPara.html("Increase every " + increaseEvery + " generations");
-    movesH3.html(
-      "Increase number of player moves by " +
-        increaseMovesBy +
-        " every " +
-        increaseEvery +
-        " generations",
-    );
-  }
-}
-function plusEvery() {
-  if (increaseEvery <= 100) {
-    increaseEvery += 1;
-    everyPara.html("Increase every " + increaseEvery + " generations");
-    movesH3.html(
-      "Increase number of player moves by " +
-        increaseMovesBy +
-        " every " +
-        increaseEvery +
-        " generations",
-    );
-  }
+function updateEvery() {
+  increaseEvery = everySlider.value();
+  everyPara.html(increaseEvery.toString());
 }
